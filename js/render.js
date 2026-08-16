@@ -3,6 +3,7 @@
 // wiring here calls back into caller-supplied handlers instead of touching global state
 // directly, so main.js stays the single owner of app state.
 
+import { BADGES, getBadgeEmojisForStop } from './badges.js';
 import { CATEGORIES } from './categories.js';
 import { getUserComposite, getAggregatedScores, getRanked, getLeaderId } from './scoring.js';
 
@@ -34,9 +35,9 @@ export function avatarRow(names, opts = {}) {
   return `<span class="avatar-row">${names.map((n) => avatarChip(n, opts)).join('')}</span>`;
 }
 
-// ctx: { stops, allRatings, allUsers, myLocalScores, mySubmittedStops, userName, expandedStopId }
+// ctx: { stops, allRatings, allUsers, myLocalScores, mySubmittedStops, userName, expandedStopId, badgesByStop }
 export function renderStops(container, ctx, handlers) {
-  const { stops, allRatings, allUsers, myLocalScores, mySubmittedStops, expandedStopId } = ctx;
+  const { stops, allRatings, allUsers, myLocalScores, mySubmittedStops, expandedStopId, badgesByStop = {} } = ctx;
   const leaderId = getLeaderId(stops, allRatings);
   const aggregated = getAggregatedScores(stops, allRatings);
 
@@ -89,7 +90,11 @@ export function renderStops(container, ctx, handlers) {
             ${Object.keys(allUsers).map((u) => {
               const hasRated = !!(allRatings[u] && allRatings[u][stop.id]);
               const userComp = hasRated ? getUserComposite(allRatings[u][stop.id]).toFixed(1) : null;
-              return avatarChip(u, { size: 26, fontSize: '0.6rem', dimmed: !hasRated, subtitle: hasRated ? userComp : 'not yet' });
+              const badgeEmojis = hasRated ? getBadgeEmojisForStop(badgesByStop, stop.id, u) : '';
+              const chip = avatarChip(u, { size: 26, fontSize: '0.6rem', dimmed: !hasRated, subtitle: hasRated ? userComp : 'not yet' });
+              return badgeEmojis
+                ? `<span class="avatar-with-badges">${chip}<span class="avatar-badge-flair" title="${escapeHtml(badgeEmojis)} earned here">${badgeEmojis}</span></span>`
+                : chip;
             }).join('')}
           </div>
           <div class="notes-section">
@@ -194,6 +199,34 @@ export function renderLeaderboard(container, stops, allRatings) {
 
   container.querySelectorAll('.leader-row').forEach((row) => {
     row.addEventListener('click', () => row.classList.toggle('expanded'));
+  });
+}
+
+// badgesByUser: {userName: [badgeId, ...]}. Renders every badge — earned ones lit up
+// with who earned them, unearned ones greyed out so there's something to chase.
+export function renderBadgeGallery(container, badgesByUser) {
+  container.innerHTML = `
+    <div class="badge-gallery-title">🏆 Titles &amp; Badges</div>
+    <div class="badge-grid">
+      ${BADGES.map((badge) => {
+        const earners = Object.keys(badgesByUser).filter((u) => badgesByUser[u]?.includes(badge.id));
+        const earned = earners.length > 0;
+        return `
+        <div class="badge-card${earned ? ' earned' : ' locked'}" data-badge-id="${badge.id}">
+          <div class="badge-card-emoji">${badge.emoji}</div>
+          <div class="badge-card-title">${escapeHtml(badge.title)}</div>
+          <div class="badge-card-detail">
+            <div class="badge-card-desc">${escapeHtml(badge.desc)}</div>
+            ${earned
+              ? `<div class="badge-card-earners">${earners.map((u) => avatarChip(u, { size: 20, fontSize: '0.55rem' })).join('')}</div>`
+              : '<div class="badge-card-earners badge-card-unearned">Nobody yet</div>'}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  container.querySelectorAll('.badge-card').forEach((card) => {
+    card.addEventListener('click', () => card.classList.toggle('open'));
   });
 }
 

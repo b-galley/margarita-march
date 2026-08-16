@@ -2,6 +2,7 @@
 // ("remember this device"), presence roster, countdown/time-adjuster. M1 adds: stops
 // CRUD, the map, scoring, and the leaderboard — the actual crawl-night core loop.
 
+import { buildBadgeContext, computeAllBadges } from "./badges.js";
 import { DEFAULT_SCORES } from "./categories.js";
 import {
   destroyStopPicker,
@@ -12,6 +13,7 @@ import {
 } from "./map.js";
 import {
   avatarChip,
+  renderBadgeGallery,
   renderLeaderboard,
   renderStops,
   updateStickyLeader,
@@ -59,6 +61,8 @@ const state = {
   notes: {},
   expandedStopId: null,
   editingStopId: null,
+  badgesByUser: {},
+  badgesByStop: {},
 };
 
 // ---------------- TOAST ----------------
@@ -139,6 +143,13 @@ function renderRoster(usersObj) {
 
 // ---------------- MAIN RENDER ----------------
 function renderAll() {
+  // Recomputed on every render — cheap at friend-group scale (a handful of users/stops),
+  // not worth caching/invalidating separately from the rest of the render pass.
+  const badgeCtx = buildBadgeContext(state.stops, state.allRatings);
+  const { badgesByUser, badgesByStop } = computeAllBadges(badgeCtx);
+  state.badgesByUser = badgesByUser;
+  state.badgesByStop = badgesByStop;
+
   renderStops(
     $("stopsList"),
     {
@@ -149,10 +160,12 @@ function renderAll() {
       mySubmittedStops: state.mySubmittedStops,
       notes: state.notes,
       expandedStopId: state.expandedStopId,
+      badgesByStop: state.badgesByStop,
     },
     stopHandlers,
   );
   renderLeaderboard($("leaderboardList"), state.stops, state.allRatings);
+  renderBadgeGallery($("badgeGallery"), state.badgesByUser);
   updateStickyLeader(state.stops, state.allRatings);
   refreshMarkers(state.stops);
 }
