@@ -18,6 +18,7 @@ import {
   renderStops,
   updateStickyLeader,
 } from "./render.js";
+import { attachPhotoMetaListener, uploadPhoto } from "./photos.js";
 import {
   createRoom,
   detachListeners,
@@ -63,6 +64,7 @@ const state = {
   editingStopId: null,
   badgesByUser: {},
   badgesByStop: {},
+  photoMeta: {},
 };
 
 // ---------------- TOAST ----------------
@@ -161,6 +163,7 @@ function renderAll() {
       notes: state.notes,
       expandedStopId: state.expandedStopId,
       badgesByStop: state.badgesByStop,
+      photoMeta: state.photoMeta,
     },
     stopHandlers,
   );
@@ -210,6 +213,15 @@ const stopHandlers = {
   },
   onNotesInput(id, text) {
     state.notes[id] = text; // local-only, matches old app's notes behavior
+  },
+  async onPhotoSelected(stopId, file) {
+    showToast("Uploading photo…");
+    try {
+      await uploadPhoto(stopId, file);
+      showToast("Photo added!");
+    } catch (err) {
+      showToast("Photo upload failed — try again");
+    }
   },
   onNav(id, dir) {
     const idx = state.stops.findIndex((s) => s.id === id);
@@ -401,6 +413,13 @@ async function goToRoom(userName, roomCode) {
           }
         });
       }
+      renderAll();
+    }),
+  );
+
+  extraListeners.push(
+    attachPhotoMetaListener((photoMeta) => {
+      state.photoMeta = photoMeta;
       renderAll();
     }),
   );

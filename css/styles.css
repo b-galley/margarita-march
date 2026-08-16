@@ -577,6 +577,64 @@ textarea {
   line-height: 1.4;
 }
 
+/* ================ PHOTOS ================ */
+.photo-section { margin-bottom: 1.1rem; }
+.photo-section-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.4rem;
+}
+.photo-grid {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
+}
+.photo-thumb-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 84px;
+  height: 84px;
+}
+.photo-thumb {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border: 2px solid var(--ink);
+  display: block;
+}
+.photo-thumb-user {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--salt);
+  font-size: 0.6rem;
+  text-align: center;
+  padding: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.photo-upload-tile {
+  flex-shrink: 0;
+  width: 84px;
+  height: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--gold);
+  cursor: pointer;
+  gap: 0.2rem;
+}
+.photo-upload-icon { font-size: 1.3rem; }
+.photo-upload-text { font-size: 0.6rem; text-align: center; color: var(--gold); }
+.photo-upload-tile input { display: none; }
+
 /* ================ SLIDERS ================ */
 .score-grid {
   display: grid;
@@ -628,6 +686,8 @@ textarea {
   background: var(--ink);
   outline: none;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .score-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -640,6 +700,9 @@ textarea {
   background-repeat: no-repeat;
   background-position: center;
   border: none;
+  box-shadow: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
 }
 .score-slider::-moz-range-thumb {
@@ -651,6 +714,9 @@ textarea {
   background-repeat: no-repeat;
   background-position: center;
   border: none;
+  box-shadow: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
 }
 /* Only show a focus ring for keyboard navigation — mouse/touch dragging the thumb

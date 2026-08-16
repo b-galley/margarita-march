@@ -35,9 +35,9 @@ export function avatarRow(names, opts = {}) {
   return `<span class="avatar-row">${names.map((n) => avatarChip(n, opts)).join('')}</span>`;
 }
 
-// ctx: { stops, allRatings, allUsers, myLocalScores, mySubmittedStops, userName, expandedStopId, badgesByStop }
+// ctx: { stops, allRatings, allUsers, myLocalScores, mySubmittedStops, userName, expandedStopId, badgesByStop, photoMeta }
 export function renderStops(container, ctx, handlers) {
-  const { stops, allRatings, allUsers, myLocalScores, mySubmittedStops, expandedStopId, badgesByStop = {} } = ctx;
+  const { stops, allRatings, allUsers, myLocalScores, mySubmittedStops, expandedStopId, badgesByStop = {}, photoMeta = {} } = ctx;
   const leaderId = getLeaderId(stops, allRatings);
   const aggregated = getAggregatedScores(stops, allRatings);
 
@@ -67,6 +67,22 @@ export function renderStops(container, ctx, handlers) {
         </div>
         <div class="stop-body">
           <p class="stop-description">${escapeHtml(stop.desc)}</p>
+          <div class="photo-section">
+            <div class="photo-section-label">Photos</div>
+            <div class="photo-grid">
+              ${Object.entries(photoMeta[stop.id] || {}).map(([user, photo]) => `
+                <div class="photo-thumb-wrap">
+                  <img class="photo-thumb" src="${photo.dataUrl}" alt="Photo by ${escapeHtml(user)}">
+                  <span class="photo-thumb-user">${escapeHtml(user)}</span>
+                </div>
+              `).join('')}
+              <label class="photo-upload-tile">
+                <span class="photo-upload-icon">📷</span>
+                <span class="photo-upload-text">Add Photo</span>
+                <input type="file" accept="image/*" capture="environment" data-photo-stop="${stop.id}">
+              </label>
+            </div>
+          </div>
           <div class="score-grid">
             ${CATEGORIES.map((cat) => `
               <div class="score-row ${cat.key === 'wildcard' ? 'wildcard-row' : ''}">
@@ -128,6 +144,13 @@ function attachStopEvents(container, handlers) {
     sl.addEventListener('input', (e) => {
       e.stopPropagation();
       handlers.onSliderInput(sl.dataset.stop, sl.dataset.cat, parseInt(sl.value, 10));
+    });
+  });
+
+  container.querySelectorAll('[data-photo-stop]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if (file) handlers.onPhotoSelected(input.dataset.photoStop, file);
     });
   });
 
