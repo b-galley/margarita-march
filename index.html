@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Margarita March · Sept 12, 2026</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  </head>
+  <body>
+    <!-- Firebase SDKs (compat build, no bundler needed) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+    <!-- ================ SPLASH / LOBBY ================ -->
+    <div class="splash" id="splash">
+      <div class="splash-content">
+        <div class="splash-eyebrow">★ 2nd Annual ★</div>
+        <h1 class="splash-title">Margarita March</h1>
+        <div class="splash-credentials">
+          September 12, 2026 · Indianapolis, IN
+        </div>
+        <p class="splash-flavor">
+          Rate every stop, chase the badges, and find out who's crowned champion
+          by the end of the march.
+        </p>
+
+        <div class="lobby-section" id="lobbySec">
+          <div class="lobby-field">
+            <label>Your Name</label>
+            <input
+              type="text"
+              id="playerName"
+              placeholder="e.g. Margo Rita"
+              maxlength="20"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="lobby-join-section">
+            <div class="room-code-inputs">
+              <input
+                type="text"
+                maxlength="1"
+                class="room-char"
+                data-idx="0"
+                autocomplete="off"
+                inputmode="text"
+              />
+              <input
+                type="text"
+                maxlength="1"
+                class="room-char"
+                data-idx="1"
+                autocomplete="off"
+                inputmode="text"
+              />
+              <input
+                type="text"
+                maxlength="1"
+                class="room-char"
+                data-idx="2"
+                autocomplete="off"
+                inputmode="text"
+              />
+              <input
+                type="text"
+                maxlength="1"
+                class="room-char"
+                data-idx="3"
+                autocomplete="off"
+                inputmode="text"
+              />
+            </div>
+            <button
+              class="enter-btn"
+              id="joinRoomBtn"
+              style="width: 100%; font-size: 1.1rem"
+            >
+              Enter the March
+            </button>
+          </div>
+
+          <div class="lobby-error" id="lobbyError"></div>
+          <div class="create-room-link" id="createRoomLink">
+            or create a new room
+          </div>
+        </div>
+
+        <div class="countdown-label">★ The March Begins In ★</div>
+        <div class="countdown" id="countdown">
+          <div class="countdown-cell">
+            <span class="countdown-num" id="cd-h">--</span
+            ><span class="countdown-unit">Hours</span>
+          </div>
+          <div class="countdown-cell">
+            <span class="countdown-num" id="cd-m">--</span
+            ><span class="countdown-unit">Min</span>
+          </div>
+          <div class="countdown-cell">
+            <span class="countdown-num" id="cd-s">--</span
+            ><span class="countdown-unit">Sec</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================ MAIN APP ================ -->
+    <div class="app-shell" id="appShell">
+      <header class="sticky-header">
+        <div class="sticky-header-row">
+          <div class="sticky-title-block">
+            <div class="sticky-title">Margarita March</div>
+            <div class="sticky-date" id="stickyDate">
+              Sept 12, 2026 · Indianapolis
+            </div>
+          </div>
+          <div class="sticky-leader" id="stickyLeader">
+            <div class="sticky-leader-label">★ Leader ★</div>
+            <div class="sticky-leader-name" id="stickyLeaderName">—</div>
+            <div class="sticky-leader-score" id="stickyLeaderScore">—</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="room-info-bar" id="roomInfoBar" style="display: none">
+        <span
+          ><span class="connection-dot online" id="connDot"></span>ROOM:
+          <span class="room-code-display" id="roomCodeDisplay">----</span></span
+        >
+        <span class="scoring-as" id="scoringAs"></span>
+        <span class="room-roster" id="roomRoster"></span>
+        <span class="user-count" id="userCountDisplay">0 marchers</span>
+        <span class="switch-device-link" id="switchDeviceLink"
+          >Not you? Switch device</span
+        >
+      </div>
+
+      <main class="main-grid">
+        <div class="left-col">
+          <section class="map-section">
+            <div class="section-header">The Route</div>
+            <div id="map"></div>
+          </section>
+
+          <section class="stops-section">
+            <div class="section-header">The Stops</div>
+            <div id="stopsList"></div>
+            <div class="actions-bar">
+              <button class="add-stop-btn" id="addStopBtn">+ Add Stop</button>
+            </div>
+          </section>
+        </div>
+
+        <aside class="leaderboard" id="leaderboard">
+          <button class="leaderboard-toggle" id="leaderboardToggle">
+            ★ Leaderboard ▾
+          </button>
+          <div class="section-header">Leaderboard</div>
+          <div class="leaderboard-list" id="leaderboardList"></div>
+        </aside>
+
+        <section class="badge-gallery" id="badgeGallery">
+          <!-- M2 fills in: badge grid -->
+        </section>
+      </main>
+    </div>
+
+    <!-- ================ ADD / EDIT STOP MODAL ================ -->
+    <div class="modal-overlay" id="addStopModal">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-eyebrow" id="stopModalEyebrow">NEW STOP</div>
+          <div
+            class="modal-champion-name"
+            id="stopModalTitle"
+            style="font-size: 1.6rem"
+          >
+            Add a Stop
+          </div>
+        </div>
+        <div class="add-stop-form">
+          <div>
+            <label>Stop Name</label>
+            <input
+              type="text"
+              id="newStopName"
+              placeholder="e.g. The Copper Cactus"
+            />
+          </div>
+          <div>
+            <label>Description</label>
+            <textarea
+              id="newStopDesc"
+              rows="2"
+              placeholder="Known for..."
+            ></textarea>
+          </div>
+          <div>
+            <label>Address</label>
+            <div class="addr-row">
+              <input
+                type="text"
+                id="newStopAddr"
+                placeholder="123 Mass Ave, Indianapolis"
+              />
+              <button type="button" class="btn btn-jet" id="lookupAddrBtn">
+                Look up
+              </button>
+            </div>
+          </div>
+          <div>
+            <label>Coordinates (optional)</label>
+            <div class="coord-row">
+              <input
+                type="number"
+                id="newStopLat"
+                step="any"
+                placeholder="Lat (e.g. 39.7684)"
+              />
+              <input
+                type="number"
+                id="newStopLng"
+                step="any"
+                placeholder="Lng (e.g. -86.1581)"
+              />
+            </div>
+          </div>
+          <div>
+            <label>Drag the pin to fix the spot</label>
+            <div id="stopPickerMap"></div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-danger" id="cancelAddStop">Cancel</button>
+          <button class="btn btn-primary" id="confirmAddStop">Save Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================ TIME ADJUSTER (creator-only, triple-tap sticky-date) ================ -->
+    <div class="time-adjust-overlay" id="timeAdjustOverlay">
+      <div class="time-adjust-box">
+        <label>Adjust Start Time</label>
+        <input type="datetime-local" id="timeAdjustInput" />
+        <div class="time-adjust-actions">
+          <button class="btn btn-danger" id="timeAdjustCancel">Cancel</button>
+          <button class="btn btn-primary" id="timeAdjustSave">Set</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
