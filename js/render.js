@@ -123,6 +123,8 @@ export function renderStops(container, ctx, handlers) {
               <button class="btn" data-nav="next" data-id="${stop.id}">Next →</button>
             </div>
             <div style="display:flex;gap:0.4rem;">
+              <button class="btn" data-move="up" data-id="${stop.id}" ${idx === 0 ? 'disabled' : ''}>▲</button>
+              <button class="btn" data-move="down" data-id="${stop.id}" ${idx === stops.length - 1 ? 'disabled' : ''}>▼</button>
               <button class="btn btn-jet" data-edit="${stop.id}">Edit</button>
               <button class="btn btn-danger" data-remove="${stop.id}">Remove</button>
             </div>
@@ -169,6 +171,13 @@ function attachStopEvents(container, handlers) {
     b.addEventListener('click', (e) => {
       e.stopPropagation();
       handlers.onNav(b.dataset.id, b.dataset.nav);
+    });
+  });
+
+  container.querySelectorAll('[data-move]').forEach((b) => {
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handlers.onMove(b.dataset.id, b.dataset.move);
     });
   });
 

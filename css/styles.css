@@ -1072,6 +1072,13 @@ textarea {
   color: var(--gold);
   border-color: var(--gold);
 }
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.stop-actions .btn[data-move] {
+  padding: 0.6rem 0.8rem;
+}
 
 .modal-overlay {
   position: fixed;

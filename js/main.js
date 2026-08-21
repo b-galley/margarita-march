@@ -35,6 +35,7 @@ import {
 import { clearSession, restoreSession } from "./session.js";
 import {
   addStop,
+  reorderStop,
   attachStopsListener,
   FALLBACK_CENTER,
   geocodeAddress,
@@ -235,6 +236,9 @@ const stopHandlers = {
     document
       .querySelectorAll(".stop-card")
       [targetIdx]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  },
+  async onMove(id, direction) {
+    await reorderStop(state.stops, id, direction);
   },
   onEdit(id) {
     const stop = state.stops.find((s) => s.id === id);
