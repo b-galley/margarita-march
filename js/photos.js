@@ -48,6 +48,10 @@ export async function uploadPhoto(stopId, file) {
     .set({ dataUrl, uploadedAt: SERVER_TIMESTAMP });
 }
 
+export async function removePhoto(stopId, userName) {
+  await getRoomRef().child(`photoMeta/${stopId}/${userName}`).remove();
+}
+
 // onChange(photoMeta) fires with the live, full photoMeta tree:
 // { stopId: { userName: {dataUrl, uploadedAt} } }
 export function attachPhotoMetaListener(onChange) {

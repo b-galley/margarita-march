@@ -37,7 +37,7 @@ export function avatarRow(names, opts = {}) {
 
 // ctx: { stops, allRatings, allUsers, myLocalScores, mySubmittedStops, userName, expandedStopId, badgesByStop, photoMeta }
 export function renderStops(container, ctx, handlers) {
-  const { stops, allRatings, allUsers, myLocalScores, mySubmittedStops, expandedStopId, badgesByStop = {}, photoMeta = {} } = ctx;
+  const { stops, allRatings, allUsers, myLocalScores, mySubmittedStops, userName, expandedStopId, badgesByStop = {}, photoMeta = {} } = ctx;
   const leaderId = getLeaderId(stops, allRatings);
   const aggregated = getAggregatedScores(stops, allRatings);
 
@@ -74,6 +74,7 @@ export function renderStops(container, ctx, handlers) {
                 <div class="photo-thumb-wrap">
                   <img class="photo-thumb" src="${photo.dataUrl}" alt="Photo by ${escapeHtml(user)}">
                   <span class="photo-thumb-user">${escapeHtml(user)}</span>
+                  ${user === userName ? `<button class="photo-delete-btn" data-remove-photo-stop="${stop.id}" data-remove-photo-user="${escapeHtml(user)}" aria-label="Delete photo" title="Delete photo">×</button>` : ''}
                 </div>
               `).join('')}
               <label class="photo-upload-tile">
@@ -153,6 +154,13 @@ function attachStopEvents(container, handlers) {
     input.addEventListener('change', () => {
       const file = input.files[0];
       if (file) handlers.onPhotoSelected(input.dataset.photoStop, file);
+    });
+  });
+
+  container.querySelectorAll('[data-remove-photo-stop]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handlers.onRemovePhoto(btn.dataset.removePhotoStop, btn.dataset.removePhotoUser);
     });
   });
 

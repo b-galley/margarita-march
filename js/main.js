@@ -18,7 +18,7 @@ import {
   renderStops,
   updateStickyLeader,
 } from "./render.js";
-import { attachPhotoMetaListener, uploadPhoto } from "./photos.js";
+import { attachPhotoMetaListener, removePhoto, uploadPhoto } from "./photos.js";
 import {
   createRoom,
   detachListeners,
@@ -161,6 +161,7 @@ function renderAll() {
       allUsers: state.allUsers,
       myLocalScores: state.myLocalScores,
       mySubmittedStops: state.mySubmittedStops,
+      userName: getRoomState().userName,
       notes: state.notes,
       expandedStopId: state.expandedStopId,
       badgesByStop: state.badgesByStop,
@@ -236,6 +237,11 @@ const stopHandlers = {
     document
       .querySelectorAll(".stop-card")
       [targetIdx]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  },
+  async onRemovePhoto(stopId, user) {
+    if (!confirm("Delete this photo?")) return;
+    await removePhoto(stopId, user);
+    showToast("Photo removed");
   },
   async onMove(id, direction) {
     await reorderStop(state.stops, id, direction);
