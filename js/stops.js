@@ -32,6 +32,24 @@ export async function updateStop(stopId, { name, desc, address, lat, lng }) {
   await getRoomRef().child('stops/' + stopId).update(updates);
 }
 
+// Swaps stopId with its neighbor in the given direction and persists an explicit `order`
+// field (0..n-1) on every stop in one multi-path update. Stops without an `order` field
+// yet (pre-reorder-feature rooms) sort last by creation order until the first reorder,
+// at which point every stop gets one and the field stays authoritative from then on.
+export async function reorderStop(stops, stopId, direction) {
+  const idx = stops.findIndex((s) => s.id === stopId);
+  if (idx < 0) return;
+  const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (targetIdx < 0 || targetIdx >= stops.length) return;
+  const reordered = [...stops];
+  [reordered[idx], reordered[targetIdx]] = [reordered[targetIdx], reordered[idx]];
+  const updates = {};
+  reordered.forEach((s, i) => {
+    updates['stops/' + s.id + '/order'] = i;
+  });
+  await getRoomRef().update(updates);
+}
+
 export async function removeStop(stopId, allRatings) {
   const roomRef = getRoomRef();
   await roomRef.child('stops/' + stopId).remove();
@@ -57,7 +75,8 @@ export async function geocodeAddress(address) {
 }
 
 // onChange(stopsArray) fires with the live, ordered list of stops whenever the room's
-// stops node changes. Order is by creation (id embeds a timestamp for added stops).
+// stops node changes. Stops with an explicit `order` field (set by reorderStop) sort by
+// that first; stops without one (not yet reordered) sort after them by creation order.
 export function attachStopsListener(onChange) {
   const stopsRef = getRoomRef().child('stops');
   const listener = (snap) => {
@@ -66,6 +85,9 @@ export function attachStopsListener(onChange) {
     const stops = Object.keys(data)
       .map((id) => ({ id, ...data[id] }))
       .sort((a, b) => {
+        const aOrder = a.order != null ? a.order : Infinity;
+        const bOrder = b.order != null ? b.order : Infinity;
+        if (aOrder !== bOrder) return aOrder - bOrder;
         const aNum = parseInt(a.id.replace(/\D/g, ''), 10) || Infinity;
         const bNum = parseInt(b.id.replace(/\D/g, ''), 10) || Infinity;
         return aNum - bNum;
