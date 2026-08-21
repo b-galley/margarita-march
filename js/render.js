@@ -92,7 +92,7 @@ export function renderStops(container, ctx, handlers) {
                   <div class="score-sublabel">${cat.sublabel}</div>
                 </div>
                 <div class="score-value" id="val-${stop.id}-${cat.key}">${localScores[cat.key] ?? 7}</div>
-                <input class="score-slider" type="range" min="1" max="10" step="1"
+                <input class="score-slider${(localScores[cat.key] ?? 7) < 5 ? ' low-score' : ''}" type="range" min="1" max="10" step="1"
                        value="${localScores[cat.key] ?? 7}"
                        data-stop="${stop.id}" data-cat="${cat.key}"
                        aria-label="${cat.label}">
@@ -146,7 +146,9 @@ function attachStopEvents(container, handlers) {
   container.querySelectorAll('.score-slider').forEach((sl) => {
     sl.addEventListener('input', (e) => {
       e.stopPropagation();
-      handlers.onSliderInput(sl.dataset.stop, sl.dataset.cat, parseInt(sl.value, 10));
+      const val = parseInt(sl.value, 10);
+      sl.classList.toggle('low-score', val < 5);
+      handlers.onSliderInput(sl.dataset.stop, sl.dataset.cat, val);
     });
   });
 
